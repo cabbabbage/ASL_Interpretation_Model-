@@ -30,8 +30,7 @@ with open(csv_file, mode='w', newline='') as file:
             # Check if the video exists in the "videos" folder
             if video_exists(video_id):
                 row.append(video_filename)
-            else:
-                print(f'{video_filename} does not exist for {action}')
+
 
         # Write the row to the CSV file
         writer.writerow(row)

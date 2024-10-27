@@ -101,7 +101,7 @@ sequence, sentence, predictions = [], [], []
 threshold, sequence_length = 0.5, 30
 
 cap = cv2.VideoCapture(0)
-with mp_holistic.Holistic(min_detection_confidence=0.1, min_tracking_confidence=0.5) as holistic:
+with mp_holistic.Holistic(min_detection_confidence=0.7, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:

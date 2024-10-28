@@ -8,6 +8,7 @@ class Consent():
     __UserID : str
     __form : any
     __filename : str
+    __signed = False
 
     def __init__(self, filename = "form.csv"):
         self.__root = Tk()
@@ -48,21 +49,22 @@ class Consent():
     def __openForm(self):
         try:
             self.__form = pd.read_csv(self.__filename, delimiter=',', index_col=0)
-        except:
-            print("Error! : Could not load from form: " + self.__filename)
+        except Exception as e:
+            print(f"An error occurred reading from {self.__filename}: {e}")
 
     def __makeForm(self, *args):
         self.__UserID = "P" + str(len(self.__form))
         info = pd.DataFrame([[self.__UserID, self.__age.get()]])
         self.__savetoForm(info)
+        self.__signed = True
         self.__root.destroy()
 
     def __savetoForm(self, info):
         try:
             print(info)
             info.to_csv(self.__filename, index=False, mode='a', header=False)
-        except:
-            print("Error! : Could not save to form: " + self.__filename)
+        except Exception as e:
+            print(f"An error occurred writing to {self.__filename}: {e}")
 
     def getName(self):
         return self.__name.get()
@@ -72,6 +74,9 @@ class Consent():
     
     def getUserID(self):
         return self.__UserID
+    
+    def isSigned(self):
+        return self.__signed
    
 
 

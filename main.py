@@ -161,6 +161,8 @@ if __name__ == "__main__":
 
         # Initialize consent form (as per your assumption, this works without UI)
         consent_form = Consent()
+        while (not consent_form.isSigned()):
+            pass
 
         # Initialize devices and randomize the order
         devices = [ASL()]  # Testing with just ASL right now

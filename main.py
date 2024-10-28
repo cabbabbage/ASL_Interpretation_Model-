@@ -165,7 +165,7 @@ if __name__ == "__main__":
             pass
 
         # Initialize devices and randomize the order
-        devices = [ASL()]  # Testing with just ASL right now
+        devices = [ASL(), Keyboard()]  # Testing with just ASL right now
         import random
         random.shuffle(devices)
 

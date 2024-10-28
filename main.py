@@ -29,7 +29,7 @@ def compare(device, target, consent_form, trial):
     input_time = device.input_time
     correct = int(device.result == target)
     
-    file_path = f"./subjects/{consent_form.getUserID()}/{device.type()}/trial_{str(trial)}.csv"
+    file_path = f"./subjects/{consent_form.getUserID()}/{device.type}/trial_{str(trial)}.csv"
     
     try:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)

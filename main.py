@@ -29,7 +29,7 @@ def compare(device, target, consent_form, trial):
     input_time = device.input_time
     correct = int(device.result == target)
     
-    file_path = f"./subjects/{consent_form.getUerID()}/{device.type()}/trial_{str(trial)}.csv"
+    file_path = f"./subjects/{consent_form.getUserID()}/{device.type()}/trial_{str(trial)}.csv"
     
     try:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -161,6 +161,8 @@ if __name__ == "__main__":
 
         # Initialize consent form (as per your assumption, this works without UI)
         consent_form = Consent()
+        while (not consent_form.isSigned()):
+            pass
 
         # Initialize devices and randomize the order
         devices = [ASL()]  # Testing with just ASL right now

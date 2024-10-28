@@ -11,40 +11,43 @@ class Consent():
     __signed = False
 
     def __init__(self, filename = "form.csv"):
-        self.__root = Tk()
-        self.__filename = filename
+        try:
+            self.__root = Tk()
+            self.__filename = filename
 
-        self.__openForm()
+            self.__openForm()
 
-        self.__root.title("Consent Form")
+            self.__root.title("Consent Form")
 
-        self.__mainframe = ttk.Frame(self.__root, padding="3 3 24 24")
-        self.__mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
-        self.__root.columnconfigure(0, weight=1)
-        self.__root.rowconfigure(0, weight=1)
-        self.__root.geometry("400x300")
+            self.__mainframe = ttk.Frame(self.__root, padding="3 3 24 24")
+            self.__mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+            self.__root.columnconfigure(0, weight=1)
+            self.__root.rowconfigure(0, weight=1)
+            self.__root.geometry("400x300")
 
-        self.__name = StringVar()
-        self.__name_entry = ttk.Entry(self.__mainframe, width=10, textvariable=self.__name)
-        self.__name_entry.grid(column=2, row=1, sticky=(W, E))
+            self.__name = StringVar()
+            self.__name_entry = ttk.Entry(self.__mainframe, width=10, textvariable=self.__name)
+            self.__name_entry.grid(column=2, row=1, sticky=(W, E))
 
-        self.__age = IntVar()
-        self.__age_entry = ttk.Entry(self.__mainframe, width=2, textvariable=self.__age)
-        self.__age_entry.grid(column=2, row=2, sticky=(W, E))
+            self.__age = IntVar()
+            self.__age_entry = ttk.Entry(self.__mainframe, width=2, textvariable=self.__age)
+            self.__age_entry.grid(column=2, row=2, sticky=(W, E))
 
-        ttk.Label(self.__mainframe, text="Name:").grid(column=1, row=1, sticky=W)
-        ttk.Label(self.__mainframe, text="Age:").grid(column=1, row=2, sticky=W)
+            ttk.Label(self.__mainframe, text="Name:").grid(column=1, row=1, sticky=W)
+            ttk.Label(self.__mainframe, text="Age:").grid(column=1, row=2, sticky=W)
 
-        ttk.Button(self.__mainframe, text="Submit", command=self.__makeForm).grid(column=3, row=3, sticky=W)
+            ttk.Button(self.__mainframe, text="Submit", command=self.__makeForm).grid(column=3, row=3, sticky=W)
 
-        for child in self.__mainframe.winfo_children(): 
-            child.grid_configure(padx=30, pady=30)
+            for child in self.__mainframe.winfo_children(): 
+                child.grid_configure(padx=30, pady=30)
 
-        self.__name_entry.focus()
-        self.__age_entry.focus()
-        self.__root.bind("<Return>", self.__makeForm)
+            self.__name_entry.focus()
+            self.__age_entry.focus()
+            self.__root.bind("<Return>", self.__makeForm)
 
-        self.__root.mainloop()
+            self.__root.mainloop()
+        except Exception as e:
+            print(f"An error occurred during Tkinter window creation for Consent Form: {e}")
 
     def __openForm(self):
         try:

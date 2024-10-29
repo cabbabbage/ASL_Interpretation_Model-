@@ -54,27 +54,41 @@ def compare(device, target, consent_form, trial):
         return True
     return correct
 
+
 def instructions_and_start(device, trial):
     try:
         root = tk.Tk()
         root.attributes('-fullscreen', True)
-        root.title(f"This is {device.type} trial {trial}/3:")
+        root.title(f"Trial {trial} - {device.type} Device")
 
         # Define instruction text based on the device type
         if device.type == "ASL":
-            instructions_text = "ASL instructions go here."
+            instructions_text = (
+                "Instructions:\n\n"
+                "1. Please sign each word shown on the screen.\n"
+                "2. The same word may appear multiple times; continue signing "
+                "until the word changes.\n\n"
+                "When you are ready, press 'Start Trial' below to begin."
+            )
         else:
-            instructions_text = "Keyboard instructions go here."
+            instructions_text = (
+                "Instructions:\n\n"
+                "1. Please type each word displayed on the screen and press 'Enter'.\n"
+                "2. The same word may appear multiple times; continue typing "
+                "and pressing 'Enter' until the word changes.\n\n"
+                "Note: There is no backspace feature.\n\n"
+                "When you are ready, press 'Start Trial' below to begin."
+            )
 
         # Create and place the instructions label
-        instructions_label = Label(root, text=instructions_text, wraplength=800)
+        instructions_label = Label(root, text=instructions_text, wraplength=800, font=("Helvetica", 16), justify="left")
         instructions_label.pack(pady=50)
 
         # Create and place the start button
         def start_trial():
             root.destroy()  # Close the window when the button is clicked
 
-        start_button = Button(root, text="Start Trial", command=start_trial)
+        start_button = Button(root, text="Start Trial", font=("Helvetica", 14), command=start_trial, width=20, height=2)
         start_button.pack(pady=50)
 
         # Run the Tkinter main loop until the user clicks the button
@@ -84,13 +98,14 @@ def instructions_and_start(device, trial):
         print(f"Error in instructions_and_start for trial {trial}: {e}")
 
 
+
 def toggle_skip():
     global skip
     skip = True
 
 def trial_run(consent_form, device, word_sets):
     global skip
-    for trial in range(1, 4):
+    for trial in range(1, 2):
         i = 0
         try:
             word_set = word_sets[trial - 1]
@@ -169,8 +184,9 @@ if True:
         pass
 
     # Initialize devices and randomize the order
-    devices = [ASL()]  # Testing with just ASL right now
+    devices = [ASL(), Keyboard()]  # Testing with just ASL right now
     random.shuffle(devices)
 
     # Run trials for each device
     trial_run(consent_form, devices[0], word_sets)
+    trial_run(consent_form, devices[1], word_sets)

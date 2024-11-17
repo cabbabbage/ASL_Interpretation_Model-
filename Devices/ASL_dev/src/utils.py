@@ -57,34 +57,47 @@ class Preprocess(tf.keras.layers.Layer):
         Returns:
             Preprocessed tensor.
         """
-        if tf.rank(inputs) == 3:
-            x = inputs[None,...]
-        else:
-            x = inputs
-        
-        mean = tf_nan_mean(tf.gather(x, [17], axis=2), axis=[1,2], keepdims=True)
-        mean = tf.where(tf.math.is_nan(mean), tf.constant(0.5,x.dtype), mean)
-        x = tf.gather(x, self.point_landmarks, axis=2) #N,T,P,C
-        std = tf_nan_std(x, center=mean, axis=[1,2], keepdims=True)
-        
-        x = (x - mean)/std
+        # Use tf.cond to handle the symbolic tensor condition
+        x = tf.cond(
+            tf.equal(tf.rank(inputs), 3),
+            lambda: inputs[None, ...],  # If rank is 3, add a new dimension
+            lambda: inputs              # Else, keep inputs as is
+        )
+
+        # Proceed with the rest of your preprocessing steps
+        mean = tf_nan_mean(tf.gather(x, [17], axis=2), axis=[1, 2], keepdims=True)
+        mean = tf.where(tf.math.is_nan(mean), tf.constant(0.5, x.dtype), mean)
+        x = tf.gather(x, self.point_landmarks, axis=2)  # N, T, P, C
+        std = tf_nan_std(x, center=mean, axis=[1, 2], keepdims=True)
+
+        x = (x - mean) / std
 
         if self.max_len is not None:
-            x = x[:,:self.max_len]
+            x = x[:, :self.max_len]
         length = tf.shape(x)[1]
-        x = x[...,:2]
+        x = x[..., :2]
 
-        dx = tf.cond(tf.shape(x)[1]>1,lambda:tf.pad(x[:,1:] - x[:,:-1], [[0,0],[0,1],[0,0],[0,0]]),lambda:tf.zeros_like(x))
+        dx = tf.cond(
+            tf.shape(x)[1] > 1,
+            lambda: tf.pad(x[:, 1:] - x[:, :-1], [[0, 0], [0, 1], [0, 0], [0, 0]]),
+            lambda: tf.zeros_like(x)
+        )
 
-        dx2 = tf.cond(tf.shape(x)[1]>2,lambda:tf.pad(x[:,2:] - x[:,:-2], [[0,0],[0,2],[0,0],[0,0]]),lambda:tf.zeros_like(x))
+        dx2 = tf.cond(
+            tf.shape(x)[1] > 2,
+            lambda: tf.pad(x[:, 2:] - x[:, :-2], [[0, 0], [0, 2], [0, 0], [0, 0]]),
+            lambda: tf.zeros_like(x)
+        )
 
-        x = tf.concat([
-            tf.reshape(x, (-1,length,2*len(self.point_landmarks))),
-            tf.reshape(dx, (-1,length,2*len(self.point_landmarks))),
-            tf.reshape(dx2, (-1,length,2*len(self.point_landmarks))),
-        ], axis = -1)
-        
-        x = tf.where(tf.math.is_nan(x),tf.constant(0.,x.dtype),x)
-        
+        x = tf.concat(
+            [
+                tf.reshape(x, (-1, length, 2 * len(self.point_landmarks))),
+                tf.reshape(dx, (-1, length, 2 * len(self.point_landmarks))),
+                tf.reshape(dx2, (-1, length, 2 * len(self.point_landmarks))),
+            ],
+            axis=-1
+        )
+
+        x = tf.where(tf.math.is_nan(x), tf.constant(0.0, x.dtype), x)
+
         return x
-    

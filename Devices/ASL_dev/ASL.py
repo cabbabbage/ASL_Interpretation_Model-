@@ -1,13 +1,3 @@
-"""
-Real-time ASL (American Sign Language) Recognition
-
-This class uses a pre-trained TFLite model to perform real-time ASL recognition using webcam feed. It utilizes the MediaPipe library for hand tracking and landmark extraction.
-
-Author: 209sontung
-
-Date: May 2023
-"""
-
 from Devices.ASL_dev.src.backbone import TFLiteModel, get_model
 from Devices.ASL_dev.src.landmarks_extraction import mediapipe_detection, draw, extract_coordinates, load_json_file
 from Devices.ASL_dev.src.config import SEQ_LEN, THRESH_HOLD
@@ -37,10 +27,11 @@ class ASL:
         self.decoder = lambda x: self.p2s_map.get(x)
         
         # Load models
-        self.models_path = ['Devices/ASL_dev/models/islr-fp16-192-8-seed_all42-foldall-last.h5']
+        self.models_path = ['Devices\ASL_dev\models\islr-fp16-192-8-seed42-fold0-best.h5']
         self.models = [get_model() for _ in self.models_path]
         for model, path in zip(self.models, self.models_path):
-            model.load_weights(path)
+            model.load_weights(path, by_name=True, skip_mismatch=True)
+
         
         # TFLite model wrapper
         self.tflite_keras_model = TFLiteModel(islr_models=self.models)
@@ -56,7 +47,7 @@ class ASL:
         """
         self.result = ""
         self.start_time = time.time()
-        self.predicting = True  # Start predicting
+        self.predicting = True  
 
     def get_result(self):
         """

@@ -13,8 +13,21 @@ from tkinter import Label, Button
 # Global variable to control the skip functionality
 skip = False
 
-def get_word_sets():
+def get_word_sets(setup = False):
     word_sets = []
+    if setup:
+        file_path = f'./Experiment_Word_Sets/all.txt'
+        if os.path.exists(file_path):
+
+            try:
+                with open(file_path, 'r') as file:
+                    words = file.read().splitlines()
+                    word_sets.append(words)
+                print(f"Loaded word set from {file_path}")
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+        return word_sets
+
     for i in range(1, 4):
         file_path = f'./Experiment_Word_Sets/{i}.txt'
         if os.path.exists(file_path):
@@ -184,8 +197,8 @@ if True:
         pass
 
     # Initialize devices and randomize the order
-    devices = [ASL(), Keyboard()]  # Testing with just ASL right now
-    random.shuffle(devices)
+    devices = [ASL(), Keyboard()]  # ASL then keyboard
+
 
     # Run trials for each device
     trial_run(consent_form, devices[0], word_sets)

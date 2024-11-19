@@ -1,88 +1,57 @@
 from tkinter import *
 from tkinter import ttk
-import numpy as np
-import pandas as pd
 
-class Consent():
-    #dunderscore is used in python to denote private variables
-    __UserID : str
-    __form : any
-    __filename : str
-    __signed = False
+class Consent:
+    def __init__(self):
+        # Initialize the Tkinter window
+        self.__root = Tk()
+        self.__root.title("Consent Form")
 
-    def __init__(self, filename = "form.csv"):
-        try:
-            self.__root = Tk()
-            self.__filename = filename
+        # Configure the main frame
+        self.__mainframe = ttk.Frame(self.__root, padding="10 10 20 20")
+        self.__mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+        self.__root.columnconfigure(0, weight=1)
+        self.__root.rowconfigure(0, weight=1)
+        self.__root.geometry("300x150")
 
-            self.__openForm()
+        # Initialize UserID and the input variable
+        self.__UserID = None
+        self.__participant_number = StringVar()
 
-            self.__root.title("Consent Form")
+        # Create UI elements
+        ttk.Label(self.__mainframe, text="Participant number:").grid(column=1, row=1, sticky=W)
+        self.__participant_entry = ttk.Entry(self.__mainframe, width=15, textvariable=self.__participant_number)
+        self.__participant_entry.grid(column=2, row=1, sticky=(W, E))
 
-            self.__mainframe = ttk.Frame(self.__root, padding="3 3 24 24")
-            self.__mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
-            self.__root.columnconfigure(0, weight=1)
-            self.__root.rowconfigure(0, weight=1)
-            self.__root.geometry("400x300")
+        ttk.Button(self.__mainframe, text="Submit", command=self.__set_user_id).grid(column=2, row=2, sticky=E)
 
-            self.__name = StringVar()
-            self.__name_entry = ttk.Entry(self.__mainframe, width=10, textvariable=self.__name)
-            self.__name_entry.grid(column=2, row=1, sticky=(W, E))
+        # Add padding to all children in the main frame
+        for child in self.__mainframe.winfo_children():
+            child.grid_configure(padx=10, pady=10)
 
-            self.__age = IntVar()
-            self.__age_entry = ttk.Entry(self.__mainframe, width=2, textvariable=self.__age)
-            self.__age_entry.grid(column=2, row=2, sticky=(W, E))
+        # Focus on the entry field and bind Enter key to submission
+        self.__participant_entry.focus()
+        self.__root.bind("<Return>", self.__set_user_id)
 
+        # Start the Tkinter main loop
+        self.__root.mainloop()
 
-            ttk.Label(self.__mainframe, text="Name:").grid(column=1, row=1, sticky=W)
-            ttk.Label(self.__mainframe, text="Age:").grid(column=1, row=2, sticky=W)
+    def __set_user_id(self, *args):
+        """Set the UserID based on the participant number input."""
+        participant_number = self.__participant_number.get().strip()
+        if participant_number.isdigit():  # Ensure input is a valid number
+            self.__UserID = "P" + participant_number
+            self.__root.destroy()  # Close the window
+        else:
+            # Show a warning if input is not a number
+            self.__participant_entry.delete(0, END)
+            self.__participant_entry.insert(0, "Invalid input")
 
-            ttk.Button(self.__mainframe, text="Submit", command=self.__makeForm).grid(column=3, row=3, sticky=W)
-
-            for child in self.__mainframe.winfo_children(): 
-                child.grid_configure(padx=30, pady=30)
-
-            self.__name_entry.focus()
-            self.__age_entry.focus()
-            self.__root.bind("<Return>", self.__makeForm)
-
-            self.__root.mainloop()
-        except Exception as e:
-            print(f"An error occurred during Tkinter window creation for Consent Form: {e}")
-
-    def __openForm(self):
-        try:
-            self.__form = pd.read_csv(self.__filename, delimiter=',', index_col=0)
-        except Exception as e:
-            print(f"An error occurred reading from {self.__filename}: {e}")
-
-    def __makeForm(self, *args):
-        self.__UserID = "P" + str(len(self.__form))
-        info = pd.DataFrame([[self.__UserID, self.__age.get()]])
-        self.__savetoForm(info)
-        self.__signed = True
-        self.__root.destroy()
-
-    def __savetoForm(self, info):
-        try:
-            print(info)
-            info.to_csv(self.__filename, index=False, mode='a', header=False)
-        except Exception as e:
-            print(f"An error occurred writing to {self.__filename}: {e}")
-
-    def getName(self):
-        return self.__name.get()
-    
-    def getAge(self):
-        return self.__age.get()
-    
-    def getUserID(self):
+    def get_user_id(self):
+        """Return the UserID."""
         return self.__UserID
-    
-    def isSigned(self):
-        return self.__signed
-   
 
 
 if __name__ == "__main__":
     consent = Consent()
+    print("UserID:", consent.get_user_id())

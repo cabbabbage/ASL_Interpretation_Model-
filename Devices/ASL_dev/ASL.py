@@ -1,40 +1,39 @@
 from Devices.ASL_dev.src.backbone import TFLiteModel, get_model
-from Devices.ASL_dev.src.landmarks_extraction import mediapipe_detection, draw, extract_coordinates, load_json_file
+from Devices.ASL_dev.src.landmarks_extraction import mediapipe_detection, extract_coordinates, load_json_file
 from Devices.ASL_dev.src.config import SEQ_LEN, THRESH_HOLD
 import numpy as np
 import cv2
-import time
 import mediapipe as mp
 import threading
 
+
 class ASL:
-    def __init__(self):
+    def __init__(self, display_window=True):
         # Initialize MediaPipe and model paths
         self.mp_holistic = mp.solutions.holistic
-        self.mp_drawing = mp.solutions.drawing_utils
         self.type = "ASL"  # Device type identifier for main.py
 
-        # Prediction result, input time, and control for continuous prediction
+        # Prediction result and control for continuous prediction
         self.result = ""
-        self.input_time = 0
-        self.start_time = 0
         self.predicting = False
 
-        # Load the sign to prediction map
+        # Load the sign-to-prediction map
         self.s2p_map = {k.lower(): v for k, v in load_json_file("Devices/ASL_dev/src/sign_to_prediction_index_map.json").items()}
         self.p2s_map = {v: k for k, v in self.s2p_map.items()}
         self.encoder = lambda x: self.s2p_map.get(x.lower())
         self.decoder = lambda x: self.p2s_map.get(x)
-        
+
         # Load models
-        self.models_path = ['Devices\ASL_dev\models\islr-fp16-192-8-seed42-fold0-best.h5']
+        self.models_path = ['Devices/ASL_dev/models/islr-fp16-192-8-seed42-fold0-best.h5']
         self.models = [get_model() for _ in self.models_path]
         for model, path in zip(self.models, self.models_path):
             model.load_weights(path, by_name=True, skip_mismatch=True)
 
-        
         # TFLite model wrapper
         self.tflite_keras_model = TFLiteModel(islr_models=self.models)
+
+        # Display control
+        self.display_window = display_window
 
         # Start the continuous run in a separate thread
         self.run_thread = threading.Thread(target=self.run, daemon=True)
@@ -43,11 +42,9 @@ class ASL:
     def start(self):
         """
         Start capturing and analyzing frames for ASL recognition.
-        This method initiates the process and sets predicting to True.
         """
         self.result = ""
-        self.start_time = time.time()
-        self.predicting = True  
+        self.predicting = True
 
     def get_result(self):
         """
@@ -55,63 +52,64 @@ class ASL:
         """
         return self.result
 
-    def get_time(self):
-        """
-        Get the time taken to reach a prediction result.
-        """
-        self.input_time = time.time() - self.start_time
-        return self.input_time
-
     def run(self):
         """
         Perform real-time ASL recognition using webcam feed continuously.
         """
         sequence_data = []
         cap = cv2.VideoCapture(0)
-        
-        with self.mp_holistic.Holistic(min_detection_confidence=0.1, min_tracking_confidence=0.1) as holistic:
-            print ("*****************************" + str(THRESH_HOLD) + "   YESSS")
+
+        # Reduce frame resolution for faster processing
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+        with self.mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+            frame_skip = 2  # Process every 2nd frame
+            frame_count = 0
+
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
                     break
 
-                # Process frame and detect landmarks if predicting is True
+                # Skip frames for faster processing
+                frame_count += 1
+                if frame_count % frame_skip != 0:
+                    continue
+
+                # Flip and process frame
                 image = cv2.flip(frame, 1)
                 if self.predicting:
+                    # Process frame using MediaPipe
                     image, results = mediapipe_detection(image, holistic)
-                    
-                    # Draw landmarks on hands if detected
-                    if results.left_hand_landmarks:
-                        self.mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp.solutions.holistic.HAND_CONNECTIONS)
-                    if results.right_hand_landmarks:
-                        self.mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp.solutions.holistic.HAND_CONNECTIONS)
-                    
+
                     try:
                         landmarks = extract_coordinates(results)
-                    except:
+                    except Exception:
                         landmarks = np.zeros((468 + 21 + 33 + 21, 3))
 
                     sequence_data.append(landmarks)
 
-                    # Generate prediction every SEQ_LEN frames
-                    if len(sequence_data) % SEQ_LEN == 0:
+                    # Predict every SEQ_LEN frames
+                    if len(sequence_data) == SEQ_LEN:
                         prediction = self.tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
-                        
-                        if np.max(prediction.numpy(), axis=-1) > .2:
+                        max_prob = np.max(prediction.numpy(), axis=-1)
+
+                        if max_prob > 0.1:
                             self.result = self.decoder(np.argmax(prediction.numpy(), axis=-1))
-                            self.input_time = time.time() - self.start_time
                             self.predicting = False  # Stop predicting once result is obtained
-                        
+
                         sequence_data = []  # Clear sequence data after prediction
 
-                # Display result text on the frame
-                cv2.putText(image, f"Result: {self.result}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                cv2.imshow('Webcam Feed', image)
+                # Display window if enabled
+                if self.display_window:
+                    cv2.putText(image, f"Result: {self.result}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    cv2.imshow('Webcam Feed', image)
 
                 # Quit if 'q' key is pressed
                 if cv2.waitKey(10) & 0xFF == ord("q"):
                     break
-            
+
             cap.release()
-            cv2.destroyAllWindows()
+            if self.display_window:
+                cv2.destroyAllWindows()

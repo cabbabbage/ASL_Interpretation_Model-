@@ -111,8 +111,10 @@ def trial_run(consent_form, device, word_sets):
             print(f"Error creating Tkinter window for trial {trial}: {e}")
             continue
 
-        device.start()
         start_time = time.time()
+        device.start()
+        if device is ASL:
+            start_time = time.time()
 
         while True:
             if i == 10:  # If 10 words have been completed, move to the next trial
@@ -124,20 +126,22 @@ def trial_run(consent_form, device, word_sets):
             elapsed_time = current_time - start_time
 
 
-            if elapsed_time >= 10 or compare(device, target_word, consent_form, trial, elapsed_time):
-                compare(device, target_word, consent_form, trial, elapsed_time)
+            if elapsed_time >= 10 or device.result == target_word:
+                correct = compare(device, target_word, consent_form, trial, elapsed_time)
 
-                i += 1
-                if i < len(word_set):
-                    target_word = word_set[i]
-                    word_label.config(text=target_word)
-                    root.update()
-                else:
-                    root.destroy()
-                    break
+                if correct or elapsed_time >= 10:
+                    i += 1
+                    if i < len(word_set):
+                        target_word = word_set[i]
+                        word_label.config(text=target_word)
+                        root.update()
+                    else:
+                        root.destroy()
+                        break
+                    start_time = time.time()
 
+                
                 device.start()
-                start_time = time.time()
             else:
                 time.sleep(0.02)
 
@@ -153,7 +157,7 @@ if __name__ == "__main__":
         sys.exit()
 
     consent_form = Consent()
-    devices = [ASL(True), Keyboard()]  # ASL then keyboard
+    devices = [ASL(False), Keyboard()]  # ASL then keyboard
 
     trial_run(consent_form, devices[0], word_sets)
     trial_run(consent_form, devices[1], word_sets)

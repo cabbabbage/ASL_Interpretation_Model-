@@ -66,12 +66,20 @@ def instructions_and_start(device, trial):
         root.attributes('-fullscreen', True)
         root.title(f"Trial {trial} - {device.type} Device")
 
-        instructions_text = (
-            "Instructions:\n\n"
-            "1. Please sign or type each word shown on the screen.\n"
-            "2. The same word may appear multiple times; continue until the word changes.\n\n"
-            "When you are ready, press 'Start Trial' below to begin."
-        )
+        if device.type == "ASL":
+            instructions_text = (
+                "Instructions:\n\n"
+                "1. Please sign each word shown on the screen.\n"
+                "2. The same word may appear multiple times; continue until the word changes.\n\n"
+                "When you are ready, press 'Start Trial' below to begin."
+            )
+        else:
+            instructions_text = (
+                "Instructions:\n\n"
+                "1. Please type each word shown on the screen.\n"
+                "2. The same word may appear multiple times; continue until the word changes.\n\n"
+                "When you are ready, press 'Start Trial' below to begin."
+            )
 
         instructions_label = Label(root, text=instructions_text, wraplength=800, font=("Helvetica", 16), justify="left")
         instructions_label.pack(pady=50)
@@ -113,8 +121,6 @@ def trial_run(consent_form, device, word_sets):
 
         start_time = time.time()
         device.start()
-        if device is ASL:
-            start_time = time.time()
 
         while True:
             if i == 10:  # If 10 words have been completed, move to the next trial

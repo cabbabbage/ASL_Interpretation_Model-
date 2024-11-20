@@ -126,7 +126,7 @@ def trial_run(consent_form, device, word_sets):
             elapsed_time = current_time - start_time
 
 
-            if elapsed_time >= 10 or device.result == target_word:
+            if elapsed_time >= 10 or device.result != "":
                 correct = compare(device, target_word, consent_form, trial, elapsed_time)
 
                 if correct or elapsed_time >= 10:

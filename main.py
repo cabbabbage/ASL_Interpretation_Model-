@@ -66,12 +66,20 @@ def instructions_and_start(device, trial):
         root.attributes('-fullscreen', True)
         root.title(f"Trial {trial} - {device.type} Device")
 
-        instructions_text = (
-            "Instructions:\n\n"
-            "1. Please sign or type each word shown on the screen.\n"
-            "2. The same word may appear multiple times; continue until the word changes.\n\n"
-            "When you are ready, press 'Start Trial' below to begin."
-        )
+        if device.type == "ASL":
+            instructions_text = (
+                "Instructions:\n\n"
+                "1. Please sign each word shown on the screen.\n"
+                "2. The same word may appear multiple times; continue until the word changes.\n\n"
+                "When you are ready, press 'Start Trial' below to begin."
+            )
+        else:
+            instructions_text = (
+                "Instructions:\n\n"
+                "1. Please type each word shown on the screen.\n"
+                "2. The same word may appear multiple times; continue until the word changes.\n\n"
+                "When you are ready, press 'Start Trial' below to begin."
+            )
 
         instructions_label = Label(root, text=instructions_text, wraplength=800, font=("Helvetica", 16), justify="left")
         instructions_label.pack(pady=50)
@@ -111,8 +119,8 @@ def trial_run(consent_form, device, word_sets):
             print(f"Error creating Tkinter window for trial {trial}: {e}")
             continue
 
-        device.start()
         start_time = time.time()
+        device.start()
 
         while True:
             if i == 10:  # If 10 words have been completed, move to the next trial
@@ -124,20 +132,22 @@ def trial_run(consent_form, device, word_sets):
             elapsed_time = current_time - start_time
 
 
-            if elapsed_time >= 10 or compare(device, target_word, consent_form, trial, elapsed_time):
-                compare(device, target_word, consent_form, trial, elapsed_time)
+            if elapsed_time >= 10 or device.result != "":
+                correct = compare(device, target_word, consent_form, trial, elapsed_time)
 
-                i += 1
-                if i < len(word_set):
-                    target_word = word_set[i]
-                    word_label.config(text=target_word)
-                    root.update()
-                else:
-                    root.destroy()
-                    break
+                if correct or elapsed_time >= 10:
+                    i += 1
+                    if i < len(word_set):
+                        target_word = word_set[i]
+                        word_label.config(text=target_word)
+                        root.update()
+                    else:
+                        root.destroy()
+                        break
+                    start_time = time.time()
 
+                
                 device.start()
-                start_time = time.time()
             else:
                 time.sleep(0.02)
 
@@ -153,7 +163,7 @@ if __name__ == "__main__":
         sys.exit()
 
     consent_form = Consent()
-    devices = [ASL(True), Keyboard()]  # ASL then keyboard
+    devices = [ASL(False), Keyboard()]  # ASL then keyboard
 
     trial_run(consent_form, devices[0], word_sets)
     trial_run(consent_form, devices[1], word_sets)
